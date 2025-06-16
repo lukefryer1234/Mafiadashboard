@@ -48,4 +48,3 @@ db.serialize(() => { // Use serialize to ensure sequential execution
 
 // Export the database connection
 module.exports = db;
-EOF
