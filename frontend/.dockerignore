@@ -1,0 +1,33 @@
+# Node.js
+node_modules
+npm-debug.log*
+yarn-error.log
+package-lock.json # If npm ci is used and package-lock.json is copied explicitly first
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build output - The Dockerfile handles building, so no need to copy pre-built 'dist' or 'build'
+# This is crucial to ensure a clean build inside Docker using the versions specified in Dockerfile.
+dist
+build
+
+# Git
+.git
+.gitignore
+
+# Docker - The Dockerfile itself is not needed inside the image
+Dockerfile
+
+# OS / Editor specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE specific
+.idea/
+.vscode/

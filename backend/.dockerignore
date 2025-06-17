@@ -1,0 +1,38 @@
+# Node.js
+node_modules
+npm-debug.log*
+yarn-error.log
+package-lock.json # If npm ci is used and package-lock.json is copied explicitly first
+
+# Environment files - these should be managed via Docker secrets or build-time args, not copied into image
+.env
+.env.*
+!.env.example
+
+# SQLite database file - if it's created inside the container or managed by a volume
+# If you intend to copy a pre-populated database into the image via the 'data' dir,
+# then do not ignore 'data/dashboard.db' or 'data/'.
+# Given our Dockerfile creates 'data/', it's fine to not ignore the directory itself,
+# but generally, instance-specific data files shouldn't be in the image.
+# For development, including an empty 'data' dir in the context is okay.
+# data/dashboard.db
+# data/dashboard.db-journal
+# data/ # If you want to ensure the data directory is always created fresh by Dockerfile RUN mkdir
+
+# Git
+.git
+.gitignore
+
+# Docker - The Dockerfile itself is not needed inside the image
+Dockerfile
+
+# OS / Editor specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE specific
+.idea/
+.vscode/

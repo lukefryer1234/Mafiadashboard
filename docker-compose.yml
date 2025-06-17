@@ -1,0 +1,40 @@
+version: '3.8' # Specify docker-compose version
+
+services:
+  backend:
+    build:
+      context: ./backend # Path to the backend Dockerfile directory
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001" # Map host port 3001 to container port 3001
+    environment:
+      - NODE_ENV=production # Recommended for containerized app
+      - PORT=3001
+      # These variables will be pulled from the .env file in the project root if it exists,
+      # or use the provided defaults if not set in .env.
+      - PULSECHAIN_RPC_URL=\${PULSECHAIN_RPC_URL:-https://rpc.pulsechain.com}
+      - JWT_SECRET=\${JWT_SECRET:-your-super-secret-jwt-key-for-docker-compose-pls-change}
+      - JWT_EXPIRES_IN=\${JWT_EXPIRES_IN:-1h}
+    volumes:
+      # Persist SQLite database outside the container
+      # The backend/Dockerfile ensures the 'data' directory exists and has 'node' user permissions.
+      - ./backend/data:/usr/src/app/backend/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend # Path to the frontend Dockerfile directory
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80" # Map host port 3000 to Nginx container port 80
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge # Default network driver
