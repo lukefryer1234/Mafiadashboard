@@ -15,7 +15,7 @@ const prepareChartJsData = (inputData, label, defaultTitle, customColor) => {
     const numericData = inputData.map(item => typeof item === 'string' ? parseFloat(item) : item).filter(item => !isNaN(item));
     if (numericData.length === 0) return null;
     return {
-      labels: numericData.map((_, index) => \`Point \${index + 1}\`),
+      labels: numericData.map((_, index) => 'Point ' + (index + 1)),
       datasets: [ { label: label || defaultTitle || 'Values', data: numericData, backgroundColor: customColor ? customColor.bg : 'rgba(75,192,192,0.5)', borderColor: customColor ? customColor.border : 'rgba(75,192,192,1)', borderWidth: 1, } ],
     };
   } else if (typeof inputData === 'object' && inputData !== null && inputData.labels && inputData.datasets) {
@@ -82,7 +82,7 @@ function App() {
       const evs = parsedAbi.map((item,i)=>({...item, id:i})).filter(item=>item.type==='event').map(e=>({id:e.id,name:e.name,inputs:e.inputs||[],anonymous:e.anonymous||false}));
       setReadOnlyFunctions(funcs); setAvailableEvents(evs); setIsAbiReady(true);
       setAbiSubmissionStatus('ABI parsed. Functions & Events extracted.'); return true;
-    } catch (e) { setAbiSubmissionStatus(\`ABI Parse Error: \${e.message}\`); setIsAbiReady(false); return false; }
+    } catch (e) { setAbiSubmissionStatus('ABI Parse Error: ' + e.message); setIsAbiReady(false); return false; }
   }, []);
 
   useEffect(() => {
@@ -98,9 +98,9 @@ function App() {
         socket.onmessage = (event) => {
             try { const message = JSON.parse(event.data); console.log('WS Received:', message.type);
                 if (message.type === 'EVENT_DATA' && message.payload) { setLiveEventMessages(prev => [message.payload, ...prev.slice(0, 49)]); setEventFrequencies(prevFreq => ({ ...prevFreq, [message.payload.eventName]: (prevFreq[message.payload.eventName] || 0) + 1 })); }
-                else if (message.type === 'SUBSCRIPTION_ACK') { setActiveWsSubscriptions(prev => ({ ...prev, [message.payload.eventName]: message.payload.status === 'subscribed' })); setEventListeningStatus(\`\${message.payload.status === 'subscribed'?'Subscribed to':'Error with'} \${message.payload.eventName}\`); }
-                else if (message.type === 'UNSUBSCRIPTION_ACK') { setActiveWsSubscriptions(prev => ({ ...prev, [message.payload.eventName]: false })); setEventListeningStatus(\`Unsubscribed from \${message.payload.eventName}\`); }
-                else if (message.type === 'SUBSCRIPTION_ERROR') setEventListeningStatus(\`Sub Error: \${message.payload.error}\`); else if (message.type === 'connection_ack') setEventListeningStatus(\`WebSocket: \${message.message}\`); else setEventListeningStatus(\`WS Msg: \${message.type}\`);
+                else if (message.type === 'SUBSCRIPTION_ACK') { setActiveWsSubscriptions(prev => ({ ...prev, [message.payload.eventName]: message.payload.status === 'subscribed' })); setEventListeningStatus((message.payload.status === 'subscribed'?'Subscribed to':'Error with') + ' ' + message.payload.eventName); }
+                else if (message.type === 'UNSUBSCRIPTION_ACK') { setActiveWsSubscriptions(prev => ({ ...prev, [message.payload.eventName]: false })); setEventListeningStatus('Unsubscribed from ' + message.payload.eventName); }
+                else if (message.type === 'SUBSCRIPTION_ERROR') setEventListeningStatus('Sub Error: ' + message.payload.error); else if (message.type === 'connection_ack') setEventListeningStatus('WebSocket: ' + message.message); else setEventListeningStatus('WS Msg: ' + message.type);
             } catch (e) { console.error("WS msg processing err:",e); setLiveEventMessages(prev => [{eventName:"Processing Error", args:{error:e.message, data:event.data.substring(0,100)}}, ...prev.slice(0,49)]);}
         };
         socket.onerror = (err) => { console.error("WS Error:", err); setWsConnectionStatus('Error'); };
@@ -110,13 +110,13 @@ function App() {
   }, [contractAddress, isAbiReady]);
 
   useEffect(() => { // Initial data fetch for latest block
-    const fetchLatestBlock = async () => { try { const res = await axios.get(\`\${BACKEND_URL}/api/latest-block\`); setLatestBlock(res.data.latestBlockNumber); } catch (err) { console.error("Err fetching block:",err); setBlockError('Failed to fetch blockchain status.'); }};
+    const fetchLatestBlock = async () => { try { const res = await axios.get(BACKEND_URL + '/api/latest-block'); setLatestBlock(res.data.latestBlockNumber); } catch (err) { console.error("Err fetching block:",err); setBlockError('Failed to fetch blockchain status.'); }};
     fetchLatestBlock();
   }, []);
 
   const fetchStoredContracts = useCallback(async () => {
     setListContractsError('');
-    try { const res = await axios.get(\`\${BACKEND_URL}/api/contracts\`); setStoredContracts(res.data); }
+    try { const res = await axios.get(BACKEND_URL + '/api/contracts'); setStoredContracts(res.data); }
     catch (err) { console.error("Err fetching stored contracts:", err.response?.data || err.message); setListContractsError(err.response?.data?.error || 'Failed to fetch stored contracts.'); }
   }, []);
 
@@ -131,38 +131,38 @@ function App() {
     if (!parseAndStoreAbiElements(contractAbi)) return;
     setAbiSubmissionStatus('Submitting ABI to backend...');
     try {
-      const res = await axios.post(\`\${BACKEND_URL}/api/contract/abi\`, { address: contractAddress, abi: contractAbi, name: contractName });
-      setAbiSubmissionStatus(\`Backend: \${res.data.message}. Client: ABI parsed.\`); fetchStoredContracts();
-    } catch (error) { setAbiSubmissionStatus(\`Backend Error: \${error.response?.data?.error || error.message}. Client: ABI parsed.\`); console.error("Err submitting ABI:", error); }
+      const res = await axios.post(BACKEND_URL + '/api/contract/abi', { address: contractAddress, abi: contractAbi, name: contractName });
+      setAbiSubmissionStatus('Backend: ' + res.data.message + '. Client: ABI parsed.'); fetchStoredContracts();
+    } catch (error) { setAbiSubmissionStatus('Backend Error: ' + (error.response?.data?.error || error.message) + '. Client: ABI parsed.'); console.error("Err submitting ABI:", error); }
   };
 
   const handleFetchData = async () => {
     if (!contractAddress.trim() || !isAbiReady) { setFetchDataStatus('Error: Contract address and ready ABI are required.'); return; }
     setFetchDataStatus('Fetching standard data...'); setContractData(null);
     try {
-      const res = await axios.get(\`\${BACKEND_URL}/api/contract/data/\${contractAddress}\`); setContractData(res.data);
+      const res = await axios.get(BACKEND_URL + '/api/contract/data/' + contractAddress); setContractData(res.data);
       if (res.data.data && Object.keys(res.data.data).length > 0) setFetchDataStatus('Standard data fetched.');
       else if (res.data.errors && Object.keys(res.data.errors).length > 0) setFetchDataStatus('Attempted standard fetch, some calls failed.');
       else setFetchDataStatus('No standard data found or contract does not implement common functions.');
-    } catch (error) { setContractData(null); if (error.response) setFetchDataStatus(\`Error fetching standard data: \${error.response.data.error || 'Failed.'}\`); else if (error.request) setFetchDataStatus('Error: No server response.'); else setFetchDataStatus(\`Error: \${error.message}\`); console.error("Error fetching standard data:", error); }
+    } catch (error) { setContractData(null); if (error.response) setFetchDataStatus('Error fetching standard data: ' + (error.response.data.error || 'Failed.')); else if (error.request) setFetchDataStatus('Error: No server response.'); else setFetchDataStatus('Error: ' + error.message); console.error("Error fetching standard data:", error); }
   };
 
   const handleSelectContract = useCallback(async (selectedAddress) => {
     resetAppSpecificStates(); setContractAddress(selectedAddress);
-    setAbiSubmissionStatus(\`Loading ABI for \${selectedAddress}...\`);
+    setAbiSubmissionStatus('Loading ABI for ' + selectedAddress + '...');
     try {
-        const res = await axios.get(\`\${BACKEND_URL}/api/contract/abi/\${selectedAddress}\`);
+        const res = await axios.get(BACKEND_URL + '/api/contract/abi/' + selectedAddress);
         if (res.data && res.data.abi) {
             const abiStr = typeof res.data.abi === 'string' ? res.data.abi : JSON.stringify(res.data.abi, null, 2);
             setContractName(res.data.name || ''); setContractAbi(abiStr);
-        } else { setAbiSubmissionStatus(\`ABI not found for \${selectedAddress}.\`); setIsAbiReady(false); }
-    } catch (error) { setAbiSubmissionStatus(\`Error loading ABI: \${error.response?.data?.error || error.message}\`); setIsAbiReady(false); console.error("Err loading stored ABI:", error); }
+        } else { setAbiSubmissionStatus('ABI not found for ' + selectedAddress); setIsAbiReady(false); }
+    } catch (error) { setAbiSubmissionStatus('Error loading ABI: ' + (error.response?.data?.error || error.message)); setIsAbiReady(false); console.error("Err loading stored ABI:", error); }
   }, [resetAppSpecificStates]); // parseAndStoreAbiElements removed, handled by useEffect [contractAbi]
 
   const handleFunctionSelect = (event) => {
     const funcId = event.target.value; setSelectedFunctionIndex(funcId);
     setFunctionInputs({}); setGenericCallResult(null); setShowGenericResultAsChart(false); setGenericCallStatus('');
-    if (funcId !== '') { const selFunc = readOnlyFunctions.find(f => f.id.toString() === funcId); if (selFunc) setFunctionInputs(selFunc.inputs.reduce((acc,inp,i)=>({...acc, [inp.name||`param\${i}`]:''}),{})); }
+    if (funcId !== '') { const selFunc = readOnlyFunctions.find(f => f.id.toString() === funcId); if (selFunc) setFunctionInputs(selFunc.inputs.reduce((acc,inp,i)=>({...acc, [inp.name||'param'+i]:''}),{})); }
   };
   const handleFunctionInputChange = (inputName, value) => { setFunctionInputs(prev => ({ ...prev, [inputName]: value })); };
   const handleEventSelectionChange = (eventName) => { setSelectedEvents(prev => ({...prev, [eventName]: !prev[eventName]})); };
@@ -170,14 +170,14 @@ function App() {
   const handleCallGenericFunction = async () => {
     const selectedFuncObj = readOnlyFunctions.find(f => f.id.toString() === selectedFunctionIndex);
     if (!selectedFuncObj) { setGenericCallStatus('Error: Function not selected.'); return; }
-    const argsArray = selectedFuncObj.inputs.map((input, idx) => functionInputs[input.name || \`param\${idx}\`] || '');
-    setGenericCallStatus(\`Calling \${selectedFuncObj.name}...\`); setGenericCallResult(null); setShowGenericResultAsChart(false);
+    const argsArray = selectedFuncObj.inputs.map((input, idx) => functionInputs[input.name || 'param'+idx] || '');
+    setGenericCallStatus('Calling ' + selectedFuncObj.name + '...'); setGenericCallResult(null); setShowGenericResultAsChart(false);
     try {
-      const response = await axios.post(\`\${BACKEND_URL}/api/contract/call/\${contractAddress}\`, { functionName: selectedFuncObj.name, args: argsArray });
-      setGenericCallResult(response.data.result); setGenericCallStatus(\`Call to \${selectedFuncObj.name} successful.\`);
+      const response = await axios.post(BACKEND_URL + '/api/contract/call/' + contractAddress, { functionName: selectedFuncObj.name, args: argsArray });
+      setGenericCallResult(response.data.result); setGenericCallStatus('Call to ' + selectedFuncObj.name + ' successful.');
       const chartableData = prepareChartJsData(response.data.result, selectedFuncObj.name, 'Call Result');
       if(chartableData) setShowGenericResultAsChart(true);
-    } catch (error) { setGenericCallResult(null); setGenericCallStatus(\`Error calling \${selectedFuncObj.name}: \${error.response?.data?.error || error.message} - \${error.response?.data?.details || ''}\`); console.error("Error calling generic function:", error); }
+    } catch (error) { setGenericCallResult(null); setGenericCallStatus('Error calling ' + selectedFuncObj.name + ': ' + (error.response?.data?.error || error.message) + ' - ' + (error.response?.data?.details || '')); console.error("Error calling generic function:", error); }
   };
 
   const handleToggleListening = () => {
@@ -185,8 +185,8 @@ function App() {
     let currentStatusUpdates = [];
     availableEvents.forEach(event => {
       const eventName = event.name; const shouldBeSubscribed = !!selectedEvents[eventName]; const isActive = !!activeWsSubscriptions[eventName];
-      if (shouldBeSubscribed && !isActive) { wsRef.current.send(JSON.stringify({ type: 'SUBSCRIBE', payload: { contractAddress, eventName } })); currentStatusUpdates.push(\`Subscribing to \${eventName}...\`); }
-      else if (!shouldBeSubscribed && isActive) { wsRef.current.send(JSON.stringify({ type: 'UNSUBSCRIBE', payload: { contractAddress, eventName } })); currentStatusUpdates.push(\`Unsubscribing from \${eventName}...\`); }
+      if (shouldBeSubscribed && !isActive) { wsRef.current.send(JSON.stringify({ type: 'SUBSCRIBE', payload: { contractAddress, eventName } })); currentStatusUpdates.push('Subscribing to ' + eventName + '...'); }
+      else if (!shouldBeSubscribed && isActive) { wsRef.current.send(JSON.stringify({ type: 'UNSUBSCRIBE', payload: { contractAddress, eventName } })); currentStatusUpdates.push('Unsubscribing from ' + eventName + '...'); }
     });
     if (currentStatusUpdates.length > 0) setEventListeningStatus(currentStatusUpdates.join(' '));
     else setEventListeningStatus("Subscription states match UI selections. No action sent.");
@@ -222,7 +222,7 @@ function App() {
 
               <div className="card"><h2>Generic Function Calls</h2>
                 {readOnlyFunctions.length > 0 ? (<div><label>Function: </label><select value={selectedFunctionIndex} onChange={handleFunctionSelect}><option value="">--Select--</option>{readOnlyFunctions.map(f=><option key={f.id} value={f.id}>{f.name}({f.inputs.map(i=>i.type).join(',')})</option>)}</select>
-                {currentSelectedFunction && (<>{currentSelectedFunction.inputs.length > 0 && (<div><h4>Inputs for {currentSelectedFunction.name}:</h4>{currentSelectedFunction.inputs.map((inp, i)=>(<div key={i}><label>{inp.name||`param\${i}`} ({inp.type}): </label><input type="text" value={functionInputs[inp.name||`param\${i}`]||''} onChange={e=>handleFunctionInputChange(inp.name||`param\${i}`,e.target.value)} style={{width:'50%'}}/></div>))}</div>)}<button onClick={handleCallGenericFunction}>Call {currentSelectedFunction.name}</button></>)}
+                {currentSelectedFunction && (<>{currentSelectedFunction.inputs.length > 0 && (<div><h4>Inputs for {currentSelectedFunction.name}:</h4>{currentSelectedFunction.inputs.map((inp, i)=>(<div key={i}><label>{inp.name||'param'+i} ({inp.type}): </label><input type="text" value={functionInputs[inp.name||'param'+i]||''} onChange={e=>handleFunctionInputChange(inp.name||'param'+i,e.target.value)} style={{width:'50%'}}/></div>))}</div>)}<button onClick={handleCallGenericFunction}>Call {currentSelectedFunction.name}</button></>)}
                 {genericCallStatus && <p style={{color: genericCallStatus.startsWith('Error:') ? 'red' : 'green'}}>{genericCallStatus}</p>}
                 {genericCallResult!==null && (<div><h4>Result: {genericCallChartData && (<button onClick={()=>setShowGenericResultAsChart(!showGenericResultAsChart)}>{showGenericResultAsChart?'JSON':'Chart'}</button>)}</h4>
                 <div className="chart-container">{showGenericResultAsChart && genericCallChartData ? <BasicChart chartData={genericCallChartData} title={currentSelectedFunction?.name}/> : <pre className="json-result">{typeof genericCallResult==='object'?JSON.stringify(genericCallResult,null,2):String(genericCallResult)}</pre>}</div>
@@ -231,7 +231,7 @@ function App() {
               </div>
 
               <div className="card"><h2>Event Listening for {contractAddress.slice(0,10)}...</h2>
-                {availableEvents.length > 0 ? (<div><p>Select events to monitor:</p><div style={{maxHeight:'150px',overflowY:'auto',border:'1px solid #ccc',padding:'5px',marginBottom:'10px'}}>{availableEvents.map(ev=>(<div key={ev.id}><input type="checkbox" id={`ev-\${ev.id}`} checked={!!selectedEvents[ev.name]} onChange={()=>handleEventSelectionChange(ev.name)}/><label htmlFor={`ev-\${ev.id}`} style={{marginLeft:'5px',color:activeWsSubscriptions[ev.name]?'green':'inherit',fontWeight:activeWsSubscriptions[ev.name]?'bold':'normal'}}>{ev.name}({ev.inputs.map(i=>\`\${i.name||'_'}:\${i.type}\`).join(', ')}){activeWsSubscriptions[ev.name]?' (Listening)':''}</label></div>))}</div>
+                {availableEvents.length > 0 ? (<div><p>Select events to monitor:</p><div style={{maxHeight:'150px',overflowY:'auto',border:'1px solid #ccc',padding:'5px',marginBottom:'10px'}}>{availableEvents.map(ev=>(<div key={ev.id}><input type="checkbox" id={'ev-'+ev.id} checked={!!selectedEvents[ev.name]} onChange={()=>handleEventSelectionChange(ev.name)}/><label htmlFor={'ev-'+ev.id} style={{marginLeft:'5px',color:activeWsSubscriptions[ev.name]?'green':'inherit',fontWeight:activeWsSubscriptions[ev.name]?'bold':'normal'}}>{ev.name}({ev.inputs.map(i=>(i.name||'_')+':'+i.type).join(', ')}){activeWsSubscriptions[ev.name]?' (Listening)':''}</label></div>))}</div>
                 <button onClick={handleToggleListening} disabled={wsConnectionStatus!=='Connected'}>Update Subscriptions</button>
                 {eventListeningStatus && <p style={{color:eventListeningStatus.startsWith('Error')?'red':'green'}}>{eventListeningStatus}</p>}
                 {eventFrequencyChartData && Object.keys(eventFrequencies).length > 0 && (<div style={{marginTop: '20px'}}><h4>Event Frequency</h4><div className="chart-container"><BasicChart chartData={eventFrequencyChartData} title="Event Frequency" /></div></div>)}
@@ -249,30 +249,6 @@ function App() {
     <div className="App">
       <h1>PulseChain Dashboard</h1>
       {renderPage()}
-      <style jsx global>{`
-        .App { font-family: sans-serif; padding: 10px; max-width: 1200px; margin: auto; }
-        .card { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card h2 { margin-top: 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
-        .chart-container { max-width: 550px; min-height: 250px; margin: 15px auto; padding: 10px; border: 1px solid #ddd; border-radius: 4px; position: relative; }
-        .json-result { background-color: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
-        button { margin-right: 5px; padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; background-color: #f0f0f0; }
-        button:hover { background-color: #e0e0e0; }
-        button:disabled { cursor: not-allowed; opacity: 0.6; }
-        input[type="text"], input[type="email"], input[type="password"], textarea, select { padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; width: calc(100% - 18px); }
-        label { display: block; margin-bottom: 2px; font-weight: bold; }
-        ul { padding-left: 20px; list-style-type: none; } /* Removed bullets for contract list for cleaner look */
-        li { margin-bottom: 8px; }
-        .auth-page { max-width: 400px; margin: 40px auto; padding: 25px; text-align: center; }
-        .auth-page form div { margin-bottom: 18px; text-align: left; }
-        .auth-page label { font-size: 0.95em; }
-        .auth-page button[type='submit'] { width: 100%; background-color: #007bff; color: white; font-size: 16px; }
-        .auth-page button[type='submit']:disabled { background-color: #aaa; }
-        .auth-page .page-message { margin-top: 15px; padding: 10px; border-radius: 4px; } /* Color set inline based on message */
-        .auth-page .error-message { margin-top: 15px; padding: 10px; background-color: #ffebee; color: #c62828; border: 1px solid #c62828; border-radius: 4px; }
-        .auth-page .link-button { background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer; padding: 5px; font-size: 0.9em; }
-        .user-status { background-color: #e7f3fe; border-color: #b3d7ff; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
-        .user-status p { margin: 0; }
-      `}</style>
     </div>
   );
 }

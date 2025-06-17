@@ -24,7 +24,7 @@ const RegistrationPage = ({ onSwitchToLogin }) => {
 
     try {
       const response = await register(email, password);
-      setMessage(\`Registration successful for \${response.email}! You can now log in.\`);
+      setMessage('Registration successful for ' + response.email + '! You can now log in.');
       setEmail('');
       setPassword('');
       setConfirmPassword('');

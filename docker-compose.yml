@@ -13,8 +13,8 @@ services:
       # These variables will be pulled from the .env file in the project root if it exists,
       # or use the provided defaults if not set in .env.
       - PULSECHAIN_RPC_URL=\${PULSECHAIN_RPC_URL:-https://rpc.pulsechain.com}
-      - JWT_SECRET=\${JWT_SECRET:-your-super-secret-jwt-key-for-docker-compose-pls-change}
-      - JWT_EXPIRES_IN=\${JWT_EXPIRES_IN:-1h}
+      - JWT_SECRET=THIS_IS_A_DEV_SECRET_REPLACE_IT_FOR_PRODUCTION_WITH_A_VERY_LONG_RANDOM_STRING_MIN_32_CHARS
+      - JWT_EXPIRES_IN=1h
     volumes:
       # Persist SQLite database outside the container
       # The backend/Dockerfile ensures the 'data' directory exists and has 'node' user permissions.

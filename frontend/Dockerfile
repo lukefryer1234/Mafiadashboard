@@ -21,7 +21,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Serve the built application with Nginx
-FROM nginx:1.25-alpine-slim # Using a slim alpine version of Nginx
+FROM nginx:1.25-alpine-slim
 
 # Remove default Nginx website
 RUN rm -rf /usr/share/nginx/html/*

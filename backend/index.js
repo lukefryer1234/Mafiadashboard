@@ -80,6 +80,7 @@ app.post('/api/auth/login', async (req, res) => {
     const isMatch = await comparePassword(password, user.password_hash);
     if (!isMatch) return res.status(401).json({ errorCode: 'INVALID_CREDENTIALS', error: 'Invalid email or password.' });
     const jwtPayload = { user: { id: user.id, email: user.email } };
+    console.log('jwtPayload:', jwtPayload);
     jwt.sign( jwtPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN }, (err, token) => {
         if (err) { console.error('[JWT_ERROR] Signing token:', err.message, err.stack); return res.status(500).json({ errorCode: 'TOKEN_SIGNING_ERROR', error: 'Could not generate token.' }); }
         console.log(`[AUTH_LOGIN] User \${user.email} (ID: \${user.id}) logged in.`);
