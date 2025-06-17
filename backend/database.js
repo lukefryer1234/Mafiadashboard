@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
+  widget_layout TEXT, -- Added for storing widget configurations as JSON string
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 `;

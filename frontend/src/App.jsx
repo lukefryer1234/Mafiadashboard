@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import axios from 'axios';
 import './App.css';
-import BasicChart from './components/BasicChart';
+// BasicChart is used by ConfigurableChartWidget, so it's indirectly used.
+// import BasicChart from './components/BasicChart';
 import { AuthContext } from './contexts/AuthContext';
 import RegistrationPage from './components/RegistrationPage';
 import LoginPage from './components/LoginPage';
+import ConfigurableChartWidget from './components/ConfigurableChartWidget';
+import MessageSigningWidget from './components/MessageSigningWidget';
+import GameAssetWidget from './components/GameAssetWidget'; // Import the new widget
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 const BACKEND_URL = 'http://localhost:3001';
 const WEBSOCKET_URL = 'ws://localhost:3001';
@@ -28,7 +33,12 @@ function App() {
   const { user, logout, isAuthenticated, isLoading: authIsLoading, authError } = useContext(AuthContext);
   const [currentPage, setCurrentPage] = useState('login');
 
-  // App-specific states (full list from previous step)
+  // State for widget instances
+  const [widgetInstances, setWidgetInstances] = useState([]);
+  const [widgetLayoutError, setWidgetLayoutError] = useState('');
+
+
+  // App-specific states (full list from previous step) - some might be deprecated by widgets
   const [latestBlock, setLatestBlock] = useState(null);
   const [blockError, setBlockError] = useState('');
   const [contractAddress, setContractAddress] = useState('');
@@ -55,7 +65,31 @@ function App() {
   const [showGenericResultAsChart, setShowGenericResultAsChart] = useState(false);
   const [eventFrequencies, setEventFrequencies] = useState({});
 
+  // Default configurations for new widgets
+  const DEFAULT_CHART_WIDGET_CONFIG = {
+    chartTitle: 'New Chart Widget',
+    chartType: 'bar',
+    datasets: [{
+      id: Date.now().toString() + "_ds", // ensure dataset ID is also unique
+      name: 'Default Dataset',
+      contractAddress: '',
+      functionName: '',
+      args: '',
+      dataPath: 'result.value',
+    }],
+  };
+  const DEFAULT_SIGN_MESSAGE_WIDGET_CONFIG = {}; // Currently no config used by MessageSigningWidget
+
+  const DEFAULT_GAME_ASSET_WIDGET_CONFIG = {
+    contractAddress: '',
+    tokenId: '',
+    assetName: 'My Game Asset',
+  };
+
+
   const resetAppSpecificStates = useCallback(() => {
+    // This function resets contract-specific monitoring tools.
+    // It should NOT reset widgetInstances as they are part of the dashboard layout.
     setContractAddress(''); setContractName(''); setContractAbi('');
     setAbiSubmissionStatus(''); setIsAbiReady(false);
     setReadOnlyFunctions([]); setAvailableEvents([]);
@@ -111,16 +145,114 @@ function App() {
 
   useEffect(() => { // Initial data fetch for latest block
     const fetchLatestBlock = async () => { try { const res = await axios.get(BACKEND_URL + '/api/latest-block'); setLatestBlock(res.data.latestBlockNumber); } catch (err) { console.error("Err fetching block:",err); setBlockError('Failed to fetch blockchain status.'); }};
-    fetchLatestBlock();
-  }, []);
+    if (isAuthenticated) fetchLatestBlock();
+  }, [isAuthenticated]);
 
   const fetchStoredContracts = useCallback(async () => {
+    if (!isAuthenticated) return;
     setListContractsError('');
     try { const res = await axios.get(BACKEND_URL + '/api/contracts'); setStoredContracts(res.data); }
     catch (err) { console.error("Err fetching stored contracts:", err.response?.data || err.message); setListContractsError(err.response?.data?.error || 'Failed to fetch stored contracts.'); }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => { if (isAuthenticated && currentPage === 'dashboard') fetchStoredContracts(); }, [isAuthenticated, currentPage, fetchStoredContracts]);
+
+  // --- Widget Management Persistence ---
+  const loadWidgetLayout = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setWidgetLayoutError('');
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/me/widget-layout`);
+      if (res.data && Array.isArray(res.data.layout)) {
+        setWidgetInstances(res.data.layout);
+      } else {
+        // Initialize with a default chart widget if no layout is found or layout is not an array
+        console.log("No valid widget layout found from backend, initializing with default.");
+        setWidgetInstances([{
+            id: `chart-${Date.now().toString()}`,
+            type: 'chart',
+            config: { ...DEFAULT_CHART_WIDGET_CONFIG, datasets: [{...DEFAULT_CHART_WIDGET_CONFIG.datasets[0], id: Date.now().toString() + "_ds_init" }] },
+        }]);
+      }
+    } catch (err) {
+      console.error("Error loading widget layout:", err);
+      setWidgetLayoutError(err.response?.data?.error || 'Failed to load widget layout. Displaying default.');
+      // Fallback to a default widget setup on error
+      setWidgetInstances([{
+        id: `chart-fallback-${Date.now().toString()}`,
+        type: 'chart',
+        config: { ...DEFAULT_CHART_WIDGET_CONFIG, datasets: [{...DEFAULT_CHART_WIDGET_CONFIG.datasets[0], id: Date.now().toString() + "_ds_fallback"}] },
+      }]);
+    }
+  }, [isAuthenticated]); // DEFAULT_CHART_WIDGET_CONFIG removed as it's stable
+
+  const saveWidgetLayoutToBackend = useCallback(async (layoutToSave) => {
+    if (!isAuthenticated) return;
+    setWidgetLayoutError('');
+    try {
+      await axios.post(`${BACKEND_URL}/api/me/widget-layout`, { layout: layoutToSave });
+    } catch (err) {
+      console.error("Error saving widget layout:", err);
+      setWidgetLayoutError(err.response?.data?.error || 'Failed to save widget layout.');
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated && currentPage === 'dashboard') {
+      loadWidgetLayout();
+    }
+  }, [isAuthenticated, currentPage, loadWidgetLayout]);
+
+  const handleAddWidget = (widgetType) => {
+    const newWidget = {
+      id: `${widgetType}-${Date.now().toString()}`,
+      type: widgetType,
+      config: {}, // Initialize empty, then assign based on type
+    };
+
+    if (widgetType === 'chart') {
+      newWidget.config = JSON.parse(JSON.stringify(DEFAULT_CHART_WIDGET_CONFIG));
+      if (newWidget.config.datasets) {
+          newWidget.config.datasets = newWidget.config.datasets.map(ds => ({...ds, id: Date.now().toString() + Math.random().toString(16).slice(2)}));
+      }
+    } else if (widgetType === 'signMessage') {
+      newWidget.config = JSON.parse(JSON.stringify(DEFAULT_SIGN_MESSAGE_WIDGET_CONFIG));
+    } else if (widgetType === 'gameAsset') {
+      newWidget.config = JSON.parse(JSON.stringify(DEFAULT_GAME_ASSET_WIDGET_CONFIG));
+    }
+
+    const updatedInstances = [...widgetInstances, newWidget];
+    setWidgetInstances(updatedInstances);
+    saveWidgetLayoutToBackend(updatedInstances);
+  };
+
+  const handleRemoveWidget = (widgetIdToRemove) => {
+    const updatedInstances = widgetInstances.filter(w => w.id !== widgetIdToRemove);
+    setWidgetInstances(updatedInstances);
+    saveWidgetLayoutToBackend(updatedInstances);
+  };
+
+  const handleWidgetConfigChange = (widgetId, newConfig) => {
+    const updatedInstances = widgetInstances.map(w =>
+      w.id === widgetId ? { ...w, config: newConfig } : w
+    );
+    setWidgetInstances(updatedInstances);
+    saveWidgetLayoutToBackend(updatedInstances);
+  };
+
+  const onDragEnd = (result) => {
+    const { destination, source } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    const reorderedInstances = Array.from(widgetInstances);
+    const [removed] = reorderedInstances.splice(source.index, 1);
+    reorderedInstances.splice(destination.index, 0, removed);
+
+    setWidgetInstances(reorderedInstances);
+    saveWidgetLayoutToBackend(reorderedInstances);
+  };
+  // --- End Widget Management ---
 
   const handleAddressChange = (event) => { setContractAddress(event.target.value); resetAppSpecificStates(); };
   const handleNameChange = (event) => { setContractName(event.target.value); };
@@ -202,53 +334,94 @@ function App() {
         if (currentPage === 'register') return <RegistrationPage onSwitchToLogin={() => setCurrentPage('login')} />;
         return <LoginPage onSwitchToRegister={() => setCurrentPage('register')} />;
     }
+    // Main content for authenticated users (Dashboard View)
     return (
-        <>
-          <div className="card user-status"><p>Logged in as: <strong>{user.email}</strong> (ID: {user.id})</p><button onClick={() => logout()}>Logout</button></div>
-          <div className="card"><p>WebSocket: <strong style={{color: wsConnectionStatus === 'Connected'?'green':(wsConnectionStatus.startsWith('Error')||wsConnectionStatus === 'Disconnected'?'red':'orange')}}>{wsConnectionStatus}</strong></p></div>
-          <div className="card"><h2>Blockchain Status</h2>{blockError && <p style={{color:'red'}}>{blockError}</p>}{latestBlock ? <p>Latest Block: <strong>{latestBlock}</strong></p> : <p>Loading...</p>}</div>
-          <div className="card"><h2>Your Stored Contracts</h2>{listContractsError && <p style={{color:'red'}}>{listContractsError}</p>}{storedContracts.length>0?<ul>{storedContracts.map(c=><li key={c.address}><strong>{c.name||'Unnamed'}</strong> ({c.address.slice(0,6)}...{c.address.slice(-4)}) <button onClick={()=>handleSelectContract(c.address)}>Load</button></li>)}</ul>:<p>No contracts.</p>}<button onClick={fetchStoredContracts} disabled={authIsLoading || !isAuthenticated}>Refresh</button></div>
-          <div className="card"><h2>Monitor Contract</h2><div><label>Address: <input type="text" value={contractAddress} onChange={handleAddressChange} style={{width:"90%"}}/></label></div><div><label>Name: <input type="text" value={contractName} onChange={handleNameChange} style={{width:"90%"}}/></label></div><div><label>ABI (JSON): <textarea value={contractAbi} onChange={handleAbiChange} rows={2} style={{width:"95%"}}/></label></div><button onClick={handleSubmitAbi}>Save & Parse ABI</button>{abiSubmissionStatus && <p style={{color:abiSubmissionStatus.includes('Error:')?'red':'green'}}>{abiSubmissionStatus}</p>}</div>
+      <div className="dashboard-view">
+        <div className="card user-status">
+          <p>Logged in as: <strong>{user.email}</strong> (ID: {user.id})</p>
+          <button onClick={() => logout()}>Logout</button>
+        </div>
 
-          {isAbiReady && contractAddress && (
-            <>
-              <div className="card"><h2>Standard Contract Data</h2>
-                <button onClick={handleFetchData} disabled={!contractAddress.trim() || !isAbiReady}>
-                  Fetch (e.g., Name, Symbol)
-                </button>
-                {fetchDataStatus && <p style={{color: fetchDataStatus.startsWith('Error:') ? 'red' : (fetchDataStatus.includes('fetched') ? 'green' : 'black')}}>{fetchDataStatus}</p>}
-                {contractData && (<div><h3>Data for {contractData.address.slice(0,10)}...</h3>{contractData.data&&Object.keys(contractData.data).length>0?<ul>{Object.entries(contractData.data).map(([k,v])=><li key={k}><strong>{k}:</strong> {String(v)}</li>)}</ul>:<p>No standard data.</p>}{contractData.errors&&<div><h4>Errors:</h4><ul>{Object.entries(contractData.errors).map(([k,v])=><li key={k} style={{color:'orange'}}><strong>{k}:</strong>{String(v)}</li>)}</ul></div>}</div>)}
-              </div>
+        <div className="add-widget-controls card">
+          <h3>Add New Widget</h3>
+          <button onClick={() => handleAddWidget('chart')}>Add Chart Widget</button>
+          <button onClick={() => handleAddWidget('signMessage')}>Add Sign Message Widget</button>
+          <button onClick={() => handleAddWidget('gameAsset')}>Add Game Asset Widget</button> {/* New button */}
+          {widgetLayoutError && <p className="widget-error" style={{marginTop: '10px'}}>{widgetLayoutError}</p>}
+        </div>
 
-              <div className="card"><h2>Generic Function Calls</h2>
-                {readOnlyFunctions.length > 0 ? (<div><label>Function: </label><select value={selectedFunctionIndex} onChange={handleFunctionSelect}><option value="">--Select--</option>{readOnlyFunctions.map(f=><option key={f.id} value={f.id}>{f.name}({f.inputs.map(i=>i.type).join(',')})</option>)}</select>
-                {currentSelectedFunction && (<>{currentSelectedFunction.inputs.length > 0 && (<div><h4>Inputs for {currentSelectedFunction.name}:</h4>{currentSelectedFunction.inputs.map((inp, i)=>(<div key={i}><label>{inp.name||'param'+i} ({inp.type}): </label><input type="text" value={functionInputs[inp.name||'param'+i]||''} onChange={e=>handleFunctionInputChange(inp.name||'param'+i,e.target.value)} style={{width:'50%'}}/></div>))}</div>)}<button onClick={handleCallGenericFunction}>Call {currentSelectedFunction.name}</button></>)}
-                {genericCallStatus && <p style={{color: genericCallStatus.startsWith('Error:') ? 'red' : 'green'}}>{genericCallStatus}</p>}
-                {genericCallResult!==null && (<div><h4>Result: {genericCallChartData && (<button onClick={()=>setShowGenericResultAsChart(!showGenericResultAsChart)}>{showGenericResultAsChart?'JSON':'Chart'}</button>)}</h4>
-                <div className="chart-container">{showGenericResultAsChart && genericCallChartData ? <BasicChart chartData={genericCallChartData} title={currentSelectedFunction?.name}/> : <pre className="json-result">{typeof genericCallResult==='object'?JSON.stringify(genericCallResult,null,2):String(genericCallResult)}</pre>}</div>
-                </div>)}
-                </div>) : <p>No read-only functions in ABI.</p>}
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="dashboardWidgets">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="widgets-container" // Ensure this class is styled for layout
+              >
+                {widgetInstances.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id} index={index}>
+                    {(providedDraggable) => (
+                      <div
+                        ref={providedDraggable.innerRef}
+                        {...providedDraggable.draggableProps}
+                        {...providedDraggable.dragHandleProps}
+                        className="widget-draggable-wrapper" // For styling individual draggable items
+                      >
+                        {widget.type === 'chart' && (
+                          <ConfigurableChartWidget
+                            widgetId={widget.id}
+                            initialConfig={widget.config}
+                            onConfigChange={(newConfig) => handleWidgetConfigChange(widget.id, newConfig)}
+                            onRemove={() => handleRemoveWidget(widget.id)}
+                          />
+                        )}
+                        {widget.type === 'signMessage' && (
+                          <MessageSigningWidget
+                            widgetId={widget.id}
+                            onRemove={() => handleRemoveWidget(widget.id)}
+                          />
+                        )}
+                        {widget.type === 'gameAsset' && ( // Render GameAssetWidget
+                          <GameAssetWidget
+                            widgetId={widget.id}
+                            initialConfig={widget.config}
+                            onConfigChange={(newConfig) => handleWidgetConfigChange(widget.id, newConfig)}
+                            onRemove={() => handleRemoveWidget(widget.id)}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
               </div>
+            )}
+          </Droppable>
+        </DragDropContext>
 
-              <div className="card"><h2>Event Listening for {contractAddress.slice(0,10)}...</h2>
-                {availableEvents.length > 0 ? (<div><p>Select events to monitor:</p><div style={{maxHeight:'150px',overflowY:'auto',border:'1px solid #ccc',padding:'5px',marginBottom:'10px'}}>{availableEvents.map(ev=>(<div key={ev.id}><input type="checkbox" id={'ev-'+ev.id} checked={!!selectedEvents[ev.name]} onChange={()=>handleEventSelectionChange(ev.name)}/><label htmlFor={'ev-'+ev.id} style={{marginLeft:'5px',color:activeWsSubscriptions[ev.name]?'green':'inherit',fontWeight:activeWsSubscriptions[ev.name]?'bold':'normal'}}>{ev.name}({ev.inputs.map(i=>(i.name||'_')+':'+i.type).join(', ')}){activeWsSubscriptions[ev.name]?' (Listening)':''}</label></div>))}</div>
-                <button onClick={handleToggleListening} disabled={wsConnectionStatus!=='Connected'}>Update Subscriptions</button>
-                {eventListeningStatus && <p style={{color:eventListeningStatus.startsWith('Error')?'red':'green'}}>{eventListeningStatus}</p>}
-                {eventFrequencyChartData && Object.keys(eventFrequencies).length > 0 && (<div style={{marginTop: '20px'}}><h4>Event Frequency</h4><div className="chart-container"><BasicChart chartData={eventFrequencyChartData} title="Event Frequency" /></div></div>)}
-                <div><h4>Live Events (Last {liveEventMessages.length}):</h4><div style={{border:'1px solid #eee',minHeight:'100px',maxHeight:'200px',padding:'5px',overflowY:'auto',fontSize:'0.8em'}}>{liveEventMessages.length===0&&<p><i>No events.</i></p>}{liveEventMessages.map((msg,i)=>(<div key={i} style={{borderBottom:'1px dashed #ccc',paddingBottom:'3px',marginBottom:'3px'}}><p><strong>{msg.eventName}</strong>@{msg.blockNumber}<span style={{fontSize:'0.85em'}}> ({msg.contractAddress?.slice(0,6)}...)</span></p><pre style={{whiteSpace:'pre-wrap',wordBreak:'break-all',margin:'0',padding:'2px',backgroundColor:'#fbfbfb'}}>{JSON.stringify(msg.args,null,1)}</pre>{msg.transactionHash&&<p style={{fontSize:'0.9em',margin:'0'}}>Tx: {msg.transactionHash.slice(0,12)}...</p>}</div>))}</div></div>
-                </div>) : <p>No events in ABI.</p>}
-              </div>
-            </>
-          )}
-          {(!isAbiReady || !contractAddress) && isAuthenticated && <div className="card"><p>Load or submit contract address & ABI.</p></div>}
-        </>
+        {/* Optional: Keep legacy tools in a separate, non-widgetized section if needed */}
+        <div className="legacy-tools-section card" style={{marginTop: '30px', borderTop: '2px solid #007bff', display: 'none'}}> {/* Hidden for now */}
+            <h2>Legacy Contract Monitoring Tools</h2>
+            {/* ... (all the old contract monitoring UI) ... */}
+        </div>
+
+      </div>
     );
   };
+
+  const renderContent = () => {
+    if (authIsLoading && !user) { return <div className="card"><p>Checking authentication...</p></div>; }
+    if (!isAuthenticated) {
+        if (currentPage === 'register') return <RegistrationPage onSwitchToLogin={() => setCurrentPage('login')} />;
+        return <LoginPage onSwitchToRegister={() => setCurrentPage('register')} />;
+    }
+    return renderPage();
+  }
 
   return (
     <div className="App">
       <h1>PulseChain Dashboard</h1>
-      {renderPage()}
+      {renderContent()}
     </div>
   );
 }

@@ -170,6 +170,70 @@ app.get('/api/contract/abi/:contractAddress', authenticateToken, (req, res) => {
   });
 });
 
+// --- Widget Layout Endpoints ---
+app.get('/api/me/widget-layout', authenticateToken, (req, res) => {
+  const userId = req.user.id;
+  console.log(`[WIDGET_LAYOUT_GET] User \${userId} fetching widget layout.`);
+  db.get("SELECT widget_layout FROM users WHERE id = ?", [userId], (err, row) => {
+    if (err) {
+      console.error(`[DB_ERROR] User \${userId} fetching layout:`, err.message, err.stack);
+      return res.status(500).json({ errorCode: 'DATABASE_ERROR', error: 'Failed to retrieve widget layout.' });
+    }
+    if (row && row.widget_layout) {
+      try {
+        const layout = JSON.parse(row.widget_layout);
+        // Ensure layout is an array, otherwise return default empty array.
+        if (Array.isArray(layout)) {
+          return res.json({ layout });
+        } else {
+          console.warn(`[WIDGET_LAYOUT_WARN] User \${userId} layout is not an array:`, layout);
+          return res.json({ layout: [] }); // Default to empty array if not array
+        }
+      } catch (parseError) {
+        console.error(`[WIDGET_LAYOUT_ERROR] User \${userId} parsing layout:`, parseError.message, parseError.stack);
+        // If parsing fails, return empty array or a default structure
+        return res.json({ layout: [] });
+      }
+    } else {
+      // No layout saved yet, or it's NULL
+      return res.json({ layout: [] });
+    }
+  });
+});
+
+app.post('/api/me/widget-layout', authenticateToken, (req, res) => {
+  const userId = req.user.id;
+  const { layout } = req.body; // Expecting the layout to be directly in req.body.layout
+
+  console.log(`[WIDGET_LAYOUT_POST] User \${userId} saving widget layout.`);
+
+  if (!Array.isArray(layout)) {
+    return res.status(400).json({ errorCode: 'INVALID_LAYOUT_FORMAT', error: 'Widget layout must be an array.' });
+  }
+
+  try {
+    const layoutString = JSON.stringify(layout);
+    db.run("UPDATE users SET widget_layout = ? WHERE id = ?", [layoutString, userId], function(err) {
+      if (err) {
+        console.error(`[DB_ERROR] User \${userId} saving layout:`, err.message, err.stack);
+        return res.status(500).json({ errorCode: 'DATABASE_ERROR', error: 'Failed to save widget layout.' });
+      }
+      if (this.changes === 0) {
+        // Should not happen if user is authenticated and exists
+        console.warn(`[WIDGET_LAYOUT_WARN] User \${userId} not found for layout update? Changes: \${this.changes}`);
+        return res.status(404).json({ errorCode: 'USER_NOT_FOUND', error: 'User not found for layout update.' });
+      }
+      console.log(`[WIDGET_LAYOUT_POST] User \${userId} layout saved successfully.`);
+      res.status(200).json({ message: 'Widget layout saved successfully.' });
+    });
+  } catch (stringifyError) {
+    // This error is less likely for a valid array, but good to have
+    console.error(`[WIDGET_LAYOUT_ERROR] User \${userId} stringifying layout:`, stringifyError.message, stringifyError.stack);
+    return res.status(500).json({ errorCode: 'LAYOUT_SERIALIZATION_ERROR', error: 'Failed to serialize layout for saving.' });
+  }
+});
+
+
 // --- Other Endpoints (Protected, but fetch ABI globally by address) ---
 app.get('/api/test', (req, res) => { /* ... */ }); // Not protected as per original setup
 app.get('/api/latest-block', async (req, res) => { /* ... */ }); // Not protected

@@ -1,12 +1,13 @@
 import React from 'react';
-import { Bar, Line } from 'react-chartjs-2'; // Added Line for potential future use
+import { Bar, Line, Pie } from 'react-chartjs-2'; // Added Pie
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  LineElement, // Added for Line chart
-  PointElement, // Added for Line chart
+  LineElement,
+  PointElement,
+  ArcElement, // Added for Pie chart
   Title,
   Tooltip,
   Legend,
@@ -18,6 +19,7 @@ ChartJS.register(
   BarElement,
   LineElement,
   PointElement,
+  ArcElement, // Added for Pie chart
   Title,
   Tooltip,
   Legend
@@ -25,11 +27,12 @@ ChartJS.register(
 
 const BasicChart = ({ chartData, chartType = 'bar', title }) => {
   // chartData is now expected to be pre-formatted by the parent component
-  // in the structure: { labels: [...], datasets: [{ label: 'Dataset', data: [...] }] }
+  // For Pie: { labels: [...], datasets: [{ data: [...], backgroundColor: [...], borderColor: [...] }] }
+  // For Bar/Line: { labels: [...], datasets: [{ label: 'Dataset', data: [...] }] }
 
-  const options = {
+  const baseOptions = {
     responsive: true,
-    maintainAspectRatio: true, // Maintain aspect ratio, can be false if specific height/width is set by container
+    maintainAspectRatio: true,
     plugins: {
       legend: {
         position: 'top',
@@ -38,35 +41,65 @@ const BasicChart = ({ chartData, chartType = 'bar', title }) => {
         display: true,
         text: title || 'Chart',
         font: {
-            size: 16
+          size: 16
         }
       },
       tooltip: {
-        mode: 'index',
+        mode: 'index', // Good for bar/line
         intersect: false,
       }
     },
+  };
+
+  const options = chartType === 'pie' ? {
+    ...baseOptions,
+    plugins: { // Pie charts often have slightly different tooltip/legend needs
+        ...baseOptions.plugins,
+        tooltip: { // For pie, 'label' or 'value' might be more common, but default is fine
+            callbacks: {
+                label: function(context) {
+                    let label = context.label || '';
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (context.parsed !== null) {
+                        label += context.parsed;
+                        // If you want to show percentage for pie charts:
+                        // const total = context.chart.data.datasets[0].data.reduce((acc, val) => acc + val, 0);
+                        // const percentage = ((context.parsed / total) * 100).toFixed(2) + '%';
+                        // label += ` (${percentage})`;
+                    }
+                    return label;
+                }
+            }
+        }
+    }
+    // Scales are not used for pie charts
+  } : {
+    ...baseOptions,
     scales: {
       x: {
         grid: {
-          display: false, // Cleaner look
+          display: false,
         }
       },
       y: {
         grid: {
-          color: '#e0e0e0', // Lighter grid lines
+          color: '#e0e0e0',
         },
         beginAtZero: true,
       }
     }
   };
 
-  if (!chartData || !chartData.labels || !chartData.datasets || chartData.datasets.length === 0) {
-    console.warn("BasicChart: Chart data is missing or improperly formatted. Received:", chartData);
-    return <p>Chart data is missing, improperly formatted, or contains no datasets.</p>;
+  if (!chartData || !chartData.labels || !chartData.datasets || chartData.datasets.length === 0 || chartData.datasets[0].data.length === 0) {
+    console.warn("BasicChart: Chart data is missing, improperly formatted, or contains no data points. Received:", chartData);
+    return <p>Chart data is missing, improperly formatted, or contains no data points.</p>;
   }
 
-  if (chartType === 'line') {
+  if (chartType === 'pie') {
+    return <Pie options={options} data={chartData} />;
+  } else if (chartType === 'line') {
     return <Line options={options} data={chartData} />;
   }
   // Default to bar chart

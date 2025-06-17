@@ -8,3 +8,442 @@
 .card {
   padding: 2em;
 }
+
+/* ConfigurableChartWidget Styles */
+.configurable-chart-widget {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.configurable-chart-widget h4 {
+  margin-top: 0;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.widget-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.widget-config-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.widget-config-form input[type="text"],
+.widget-config-form select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1em;
+}
+
+.widget-config-form button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.widget-config-form button:hover {
+  background-color: #0056b3;
+}
+
+.widget-config-form button.remove-widget-button {
+  background-color: #dc3545;
+}
+
+.widget-config-form button.remove-widget-button:hover {
+  background-color: #c82333;
+}
+
+.widget-config-form button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.widget-error {
+  color: #D8000C; /* Red for errors */
+  background-color: #FFD2D2; /* Light red background */
+  border: 1px solid #D8000C;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.chart-display-area {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  min-height: 300px; /* Ensure space for chart or messages */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-display-area p {
+  color: #777;
+  font-style: italic;
+}
+
+/* MessageSigningWidget Styles */
+.message-signing-widget {
+  border: 1px solid #00bcd4; /* Cyan border */
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #f0f9fa; /* Light cyan background */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.message-signing-widget h4 {
+  margin-top: 0;
+  color: #00796b; /* Darker cyan/teal for title */
+  border-bottom: 1px solid #b2ebf2; /* Light cyan border */
+  padding-bottom: 8px;
+}
+
+.message-signing-widget .widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.message-signing-widget textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #b2dfdb; /* Light teal border */
+  border-radius: 4px;
+  font-family: monospace; /* Good for signatures */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.message-signing-widget .sign-button {
+  padding: 10px 15px;
+  background-color: #009688; /* Teal */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.message-signing-widget .sign-button:hover {
+  background-color: #00796b; /* Darker teal */
+}
+
+.message-signing-widget .sign-button:disabled {
+  background-color: #9e9e9e; /* Grey when disabled */
+  cursor: not-allowed;
+}
+
+.message-signing-widget .widget-status {
+  color: #00796b; /* Teal for status messages */
+  margin: 5px 0;
+  font-weight: bold;
+}
+
+.message-signing-widget .signature-display {
+  margin-top: 10px;
+}
+
+.message-signing-widget .signature-display p {
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #00796b;
+}
+
+.message-signing-widget .remove-widget-button {
+  margin-top: 15px; /* Add some space above the remove button */
+  background-color: #f44336; /* Red */
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.message-signing-widget .remove-widget-button:hover {
+  background-color: #d32f2f; /* Darker red */
+}
+/* Ensure .widget-error is generic enough or duplicate/customize if needed */
+/* Using existing .widget-error style from ConfigurableChartWidget */
+
+/* Styles for Multi-Dataset Management in ConfigurableChartWidget */
+.datasets-management {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.datasets-management h5 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.datasets-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.datasets-list li {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.datasets-list li span {
+  flex-grow: 1;
+  font-size: 0.95em;
+}
+
+.datasets-list li button {
+  margin-left: 8px;
+  padding: 5px 10px;
+  font-size: 0.85em;
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid transparent;
+}
+
+.datasets-list li button:first-of-type { /* Edit button */
+  background-color: #ffc107; /* Amber */
+  border-color: #ffc107;
+  color: #333;
+}
+.datasets-list li button:first-of-type:hover {
+  background-color: #e0a800;
+}
+
+.datasets-list li button:last-of-type { /* Remove button */
+  background-color: #f44336; /* Red */
+  border-color: #f44336;
+  color: white;
+}
+.datasets-list li button:last-of-type:hover {
+  background-color: #d32f2f;
+}
+
+.datasets-management > button { /* Add Dataset button */
+  background-color: #28a745; /* Green */
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 5px; /* Space after list or 'No datasets' text */
+}
+.datasets-management > button:hover {
+  background-color: #218838;
+}
+
+.dataset-form {
+  margin-top: 15px;
+  padding: 15px;
+  border: 1px dashed #007bff; /* Blue dashed border */
+  border-radius: 5px;
+  background-color: #f4f8ff; /* Light blue background */
+}
+
+.dataset-form h5 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #0056b3; /* Darker blue */
+}
+
+.dataset-form label {
+  display: block; /* Each label on a new line */
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: #333;
+}
+
+.dataset-form input[type="text"] {
+  width: calc(100% - 16px); /* Full width minus padding */
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.dataset-form button {
+  margin-top: 10px;
+  padding: 8px 15px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.dataset-form button:first-of-type { /* Save Dataset */
+  background-color: #007bff; /* Blue */
+  color: white;
+  border-color: #007bff;
+  margin-right: 8px;
+}
+.dataset-form button:first-of-type:hover {
+  background-color: #0056b3;
+}
+
+.dataset-form button:last-of-type { /* Cancel */
+  background-color: #6c757d; /* Gray */
+  color: white;
+  border-color: #6c757d;
+}
+.dataset-form button:last-of-type:hover {
+  background-color: #5a6268;
+}
+
+/* App.jsx - Widget Management UI Styles */
+.add-widget-controls {
+  padding: 15px;
+  margin-bottom: 20px;
+  background-color: #e9ecef; /* Light grey background */
+  border-radius: 8px;
+  text-align: left;
+}
+
+.add-widget-controls h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #343a40; /* Dark grey text */
+}
+
+.add-widget-controls button {
+  background-color: #007bff; /* Primary blue */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin-right: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.add-widget-controls button:hover {
+  background-color: #0056b3; /* Darker blue */
+}
+
+.widgets-container {
+  /* This is the Droppable area */
+  padding: 10px;
+  background-color: #f8f9fa; /* Very light grey, almost white */
+  border-radius: 5px;
+  min-height: 100px; /* Ensure it's visible even when empty */
+  border: 1px dashed #ced4da; /* Dashed border */
+}
+
+.widget-draggable-wrapper {
+  margin-bottom: 15px; /* Space between draggable widgets */
+  /* Individual widgets (like ConfigurableChartWidget) already have their own borders and padding. */
+  /* This wrapper can be used for additional spacing or effects if needed. */
+}
+
+.legacy-tools-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #6c757d; /* Medium grey border */
+}
+
+.legacy-tools-section h2 {
+  color: #495057; /* Slightly lighter than widget titles */
+  margin-bottom: 15px;
+}
+
+/* Ensure user-status card is styled appropriately if it's part of dashboard view */
+.dashboard-view .user-status {
+  margin-bottom: 20px;
+  text-align: right; /* Align user status info to the right */
+}
+.dashboard-view .user-status p {
+  margin-right: 10px;
+  display: inline-block;
+}
+.dashboard-view .user-status button {
+   background-color: #6c757d; /* Secondary grey */
+}
+.dashboard-view .user-status button:hover {
+   background-color: #545b62; /* Darker secondary grey */
+}
+
+/* GameAssetWidget Styles */
+.game-asset-widget {
+  border: 1px solid #4caf50; /* Green border */
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #f1f8e9; /* Light green background */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.game-asset-widget h4 {
+  margin-top: 0;
+  color: #2e7d32; /* Darker green for title */
+  border-bottom: 1px solid #c8e6c9; /* Light green border for separator */
+  padding-bottom: 8px;
+}
+
+/* Uses .widget-config-form and .widget-error from ConfigurableChartWidget, so those are reused */
+/* Specifically style its display area if needed */
+.game-asset-widget .asset-display {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #ffffff;
+  border: 1px solid #a5d6a7; /* Softer green border */
+  border-radius: 4px;
+}
+
+.game-asset-widget .asset-display h5 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #388e3c; /* Medium green */
+}
+
+.game-asset-widget .asset-display p {
+  margin: 5px 0;
+  font-size: 1em;
+  color: #1b5e20; /* Dark green text */
+}
+
+.game-asset-widget .remove-widget-button {
+  /* General remove button style is in .widget-config-form button.remove-widget-button */
+  /* This widget's remove button is outside the form, so needs explicit styling if different */
+  /* For now, assume it can reuse existing .remove-widget-button if that's made generic enough */
+  /* Or, if it's always the same as ConfigurableChartWidget's: */
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 8px 12px; /* Consistent padding */
+  font-size: 0.9em; /* Consistent font size */
+  transition: background-color 0.2s ease-in-out;
+}
+.game-asset-widget .remove-widget-button:hover {
+  background-color: #c82333;
+}
+.game-asset-widget .remove-widget-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
