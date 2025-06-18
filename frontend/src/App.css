@@ -1,12 +1,426 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Import Google Font - Open Sans */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+
+/* Define Color Scheme and Base Styles */
+:root {
+  --font-family-base: 'Open Sans', sans-serif;
+  --background-color: #1a1d24; /* Darker background */
+  --card-background-color: #252a33; /* Slightly lighter for cards */
+  --text-color: #e0e0e0; /* Light text for readability */
+  --text-muted-color: #a0a0a0; /* For less important text */
+  --primary-color: #00aaff; /* Vibrant accent color */
+  --primary-hover-color: #0088cc;
+  --secondary-color: #3c424f; /* For borders, secondary info */
+  --error-color: #ff4d4d;
+  --success-color: #4caf50;
+  --link-color: var(--primary-color);
+  --link-hover-color: var(--primary-hover-color);
+
+  --border-radius-base: 6px;
+  --spacing-unit: 1rem;
+  --box-shadow-base: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --box-shadow-light: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
+body {
+  font-family: var(--font-family-base);
+  background-color: var(--background-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+#root {
+  max-width: 100%; /* Allow full width */
+  margin: 0 auto;
+  padding: var(--spacing-unit); /* Consistent padding */
+  text-align: left; /* Default to left align */
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-color);
+  font-weight: 600;
+  margin-top: calc(var(--spacing-unit) * 1.5);
+  margin-bottom: var(--spacing-unit);
+}
+
+h1 { font-size: 2.2rem; text-align: center; margin-bottom: calc(var(--spacing-unit) * 1.5); color: var(--primary-color); }
+h2 { font-size: 1.8rem; border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5em;}
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.2rem; color: var(--text-muted-color); }
+
+p {
+  margin-bottom: var(--spacing-unit);
+  color: var(--text-color);
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--link-hover-color);
+  text-decoration: underline;
+}
+
+/* Card Styling */
 .card {
-  padding: 2em;
+  background-color: var(--card-background-color);
+  border: 1px solid var(--secondary-color);
+  border-radius: var(--border-radius-base);
+  padding: calc(var(--spacing-unit) * 1.5);
+  margin-bottom: calc(var(--spacing-unit) * 1.5);
+  box-shadow: var(--box-shadow-base);
+  text-align: left;
+}
+
+.card h2 {
+  margin-top: 0;
+  border-bottom: 1px solid var(--secondary-color); /* Thinner border for card titles */
+  padding-bottom: 0.6em;
+  font-size: 1.6rem; /* Slightly adjusted size */
+}
+
+.user-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--secondary-color); /* Darker, fits theme */
+  padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+  border-radius: var(--border-radius-base);
+}
+.user-status p { margin: 0; }
+.user-status strong { color: var(--primary-color); }
+
+/* Input, Button, Select Styling */
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  border: 1px solid var(--secondary-color);
+  border-radius: var(--border-radius-base);
+  padding: 0.75em 1em;
+  margin: 0.5em 0 var(--spacing-unit) 0;
+  box-sizing: border-box;
+  width: 100%; /* Full width by default */
+  font-family: var(--font-family-base);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color), 0.3);
+  outline: none;
+}
+
+textarea {
+  min-height: 80px;
+}
+
+/* Custom Checkbox Styling */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--secondary-color);
+  border-radius: 3px;
+  background-color: var(--background-color);
+  cursor: pointer;
+  vertical-align: middle;
+  position: relative;
+  margin-right: 0.5em;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+input[type="checkbox"]:checked::before {
+  content: '✔';
+  font-size: 12px;
+  color: var(--card-background-color); /* Checkmark color */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+input[type="checkbox"]:hover {
+  border-color: var(--primary-color);
+}
+
+button {
+  background-color: var(--primary-color);
+  color: #fff; /* White text on primary buttons for contrast */
+  border: none;
+  border-radius: var(--border-radius-base);
+  padding: 0.75em 1.5em;
+  margin: 0.5em 0.25em;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-weight: 600;
+  font-size: 0.95em;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  text-transform: uppercase; /* Optional: for a more "button-like" feel */
+}
+
+button:hover {
+  background-color: var(--primary-hover-color);
+  transform: translateY(-1px); /* Slight lift on hover */
+}
+
+button:disabled {
+  background-color: var(--secondary-color);
+  color: var(--text-muted-color);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Specific Component Polish */
+
+/* Login/Registration Page Container (Assuming a wrapper) */
+.auth-page-container { /* Add this class to LoginPage and RegistrationPage main div */
+  max-width: 450px;
+  margin: calc(var(--spacing-unit) * 3) auto;
+  padding: calc(var(--spacing-unit) * 2);
+}
+.auth-page-container .card {
+  padding: calc(var(--spacing-unit) * 2);
+}
+.auth-page-container h1 { /* More specific if needed */
+    margin-bottom: var(--spacing-unit);
+}
+
+/* Stored Contracts List */
+.card ul {
+  list-style: none;
+  padding-left: 0;
+}
+.card ul li {
+  background-color: var(--secondary-color);
+  padding: var(--spacing-unit);
+  margin-bottom: 0.5em;
+  border-radius: var(--border-radius-base);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+.card ul li:hover {
+  background-color: #333945; /* Slightly lighter on hover */
+}
+.card ul li strong {
+  color: var(--primary-color);
+}
+.card ul li button { /* Smaller buttons for list items */
+  padding: 0.4em 0.8em;
+  font-size: 0.85em;
+  margin-left: var(--spacing-unit);
+}
+
+
+/* Game Activity Log */
+.game-activity-log-container {
+  padding: var(--spacing-unit);
+  border: 1px solid var(--secondary-color);
+  border-radius: var(--border-radius-base);
+  background-color: var(--card-background-color); /* Match card bg */
+  margin-top: var(--spacing-unit);
+}
+.game-activity-log-container h4 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-unit);
+  font-size: 1.3em;
+  color: var(--text-color); /* Brighter than muted */
+  border-bottom: 1px solid var(--secondary-color);
+  padding-bottom: 0.5em;
+}
+.event-feed {
+  max-height: 350px;
+  overflow-y: auto;
+  padding: 0.5em;
+  border: 1px solid var(--secondary-color);
+  background-color: var(--background-color); /* Darker feed background */
+  border-radius: var(--border-radius-base);
+}
+.event-entry {
+  padding: var(--spacing-unit);
+  margin-bottom: 0.5em;
+  border-bottom: 1px solid var(--secondary-color);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-background-color); /* Match card, or slightly different */
+  border-radius: 3px; /* Smaller radius for entries */
+}
+.event-entry:last-child { border-bottom: none; margin-bottom: 0; }
+/* Remove alternating row colors if it clashes with dark theme, or adjust */
+.event-entry:nth-child(odd) { background-color: var(--card-background-color); }
+.event-entry:nth-child(even) { background-color: #2a2f38; } /* Slightly different shade */
+
+.event-timestamp {
+  font-size: 0.85em;
+  color: var(--text-muted-color);
+  margin-bottom: 0.3em;
+  font-weight: 600;
+}
+.event-message {
+  font-size: 1em;
+  color: var(--text-color);
+  word-wrap: break-word;
+  margin: 0;
+}
+
+/* Event Configuration Item Styling */
+.event-config-item {
+  display: flex;
+  align-items: center;
+  padding: 0.4em 0;
+  margin-bottom: 0.3em;
+}
+.event-config-item label {
+  margin-right: 0.5em;
+  flex-grow: 1;
+  color: var(--text-color);
+  font-size: 0.95em;
+}
+.event-config-item label[style*="font-weight:bold"] { /* Target listened events */
+    color: var(--primary-color);
+}
+.event-config-item input[type="checkbox"] {
+  margin-left: 0.5em;
+  flex-shrink: 0;
+}
+
+/* Alerts Container */
+.alerts-container {
+  position: fixed;
+  bottom: var(--spacing-unit);
+  right: var(--spacing-unit);
+  width: 320px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column-reverse;
+}
+.alert-message {
+  background-color: var(--primary-color); /* Use primary color for alerts */
+  color: #fff; /* White text for contrast */
+  border: 1px solid var(--primary-hover-color);
+  padding: var(--spacing-unit);
+  margin-top: 0.75em;
+  border-radius: var(--border-radius-base);
+  box-shadow: var(--box-shadow-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95em;
+  animation: alertFadeIn 0.4s ease-out;
+}
+.alert-message span { flex-grow: 1; word-wrap: break-word; }
+.alert-dismiss-btn {
+  background: none; border: none; color: #fff;
+  font-size: 1.3em; font-weight: bold; cursor: pointer;
+  padding: 0 0 0 0.75em; line-height: 1; opacity: 0.8;
+}
+.alert-dismiss-btn:hover { opacity: 1; }
+
+/* JSON Result Styling */
+.json-result {
+  background-color: #1e1e1e; /* Even darker for code blocks */
+  color: #d4d4d4;
+  padding: var(--spacing-unit);
+  border-radius: var(--border-radius-base);
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Common monospace fonts */
+  font-size: 0.9em;
+  border: 1px solid var(--secondary-color);
+}
+
+/* Chart Container */
+.chart-container {
+  position: relative;
+  margin: var(--spacing-unit) auto;
+  height: 45vh;
+  width: 100%; /* Responsive width */
+  max-width: 700px;
+  padding: var(--spacing-unit);
+  border: 1px solid var(--secondary-color);
+  border-radius: var(--border-radius-base);
+  background-color: var(--card-background-color);
+}
+
+/* Error and Success Messages (General Purpose) */
+.error-message-general, .success-message-general { /* Renamed to avoid conflict if needed */
+  padding: var(--spacing-unit);
+  margin-top: var(--spacing-unit);
+  border-radius: var(--border-radius-base);
+  font-weight: 600;
+}
+.error-message-general {
+  color: #fff; background-color: var(--error-color); border: 1px solid #c0392b;
+}
+.success-message-general {
+  color: #fff; background-color: var(--success-color); border: 1px solid #388E3C;
+}
+/* Style for status messages within ABI submission, etc. */
+p[style*="color:red"] { color: var(--error-color) !important; }
+p[style*="color:green"] { color: var(--success-color) !important; }
+p[style*="color:orange"] { color: #f39c12 !important; } /* Warning color */
+
+
+/* Basic Media Queries */
+@media (max-width: 768px) {
+  body { font-size: 15px; }
+  #root { padding: 0.5rem; }
+  .card { padding: var(--spacing-unit); margin-bottom: var(--spacing-unit); }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.5rem; }
+  button { padding: 0.6em 1.2em; font-size: 0.9em; }
+  input[type="text"], input[type="password"], textarea, select { padding: 0.65em 0.9em; }
+  .alerts-container { width: 90%; bottom: 10px; right: 5%; }
+  .chart-container { height: 35vh; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  .user-status { flex-direction: column; align-items: flex-start; }
+  .user-status button { margin-top: 0.5em; }
+  .card ul li { flex-direction: column; align-items: flex-start; }
+  .card ul li button { margin-top: 0.5em; margin-left: 0; }
+}
+
+/* Ensure App container takes full height if needed, or centers content */
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.App > h1 { /* Main dashboard title */
+  text-align: center;
+  color: var(--primary-color);
+  margin-top: var(--spacing-unit);
+  margin-bottom: calc(var(--spacing-unit) * 1.5);
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Wrapper for dashboard content after login */
+.dashboard-content {
+  padding: var(--spacing-unit);
+  flex-grow: 1;
 }
 
 /* ConfigurableChartWidget Styles */
